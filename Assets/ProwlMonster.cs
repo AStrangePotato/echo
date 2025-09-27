@@ -37,9 +37,8 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     private JumpPhase jumpPhase = JumpPhase.None;
 
     private float postJumpPause = 0.5f; // wait time before jumping to roof
-private float pauseTimer = 0f;
-private bool waitingToHide = false;
-
+    private float pauseTimer = 0f;
+    private bool waitingToHide = false;
 
     void Start()
     {
@@ -50,74 +49,80 @@ private bool waitingToHide = false;
 
     void Update()
     {
-        if (!isJumping) return;
+        if (isJumping)
+        {
+            timer += Time.deltaTime;
+            float duration = (jumpPhase == JumpPhase.ToPlayer) ? jumpDuration : roofDuration;
+            float t = Mathf.Clamp01(timer / duration);
+            float easeT = t * (2 - t);
 
-        timer += Time.deltaTime;
-        float duration = (jumpPhase == JumpPhase.ToPlayer) ? jumpDuration : roofDuration;
-        float t = Mathf.Clamp01(timer / duration);
-        float easeT = t * (2 - t);
+            // Horizontal movement
+            Vector3 horizontal = Vector3.Lerp(startPos, targetPos, easeT);
+            float yOffset;
 
-        // Horizontal movement
-        Vector3 horizontal = Vector3.Lerp(startPos, targetPos, easeT);
-        float yOffset;
+            if (jumpPhase == JumpPhase.ToPlayer)
+                yOffset = jumpHeight * 4 * t * (1 - t); // parabolic jump
+            else
+                yOffset = Mathf.Lerp(startPos.y, targetPos.y, easeT) - startPos.y; // linear up
 
-        if (jumpPhase == JumpPhase.ToPlayer)
-            yOffset = jumpHeight * 4 * t * (1 - t); // parabolic jump
-        else
-            yOffset = Mathf.Lerp(startPos.y, targetPos.y, easeT) - startPos.y; // linear up
+            transform.position = new Vector3(horizontal.x, horizontal.y + yOffset, horizontal.z);
 
-        transform.position = new Vector3(horizontal.x, horizontal.y + yOffset, horizontal.z);
+            // Face player during first jump
+            if (jumpPhase == JumpPhase.ToPlayer && player != null)
+            {
+                Vector3 lookDir = (player.position - transform.position).normalized;
+                lookDir.y = 0;
+                if (lookDir.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(lookDir);
+            }
 
-        // Face player only during first jump
-        if (jumpPhase == JumpPhase.ToPlayer && player != null)
+            // Mid-jump hit check only during first jump
+            if (!hasHitPlayer && jumpPhase == JumpPhase.ToPlayer && player != null)
+            {
+                float distance = Vector3.Distance(transform.position, player.position);
+                if (distance < hitRadius)
+                {
+                    hasHitPlayer = true;
+                    hits++;
+                    Debug.Log("[Monster] Player hit mid-jump!");
+                    if (hitFlashLight != null)
+                        StartCoroutine(RedLightFlash());
+                }
+            }
+
+            if (t >= 1f)
+            {
+                if (jumpPhase == JumpPhase.ToPlayer)
+                {
+                    // Start waiting instead of immediately jumping to roof
+                    waitingToHide = true;
+                    pauseTimer = 0f;
+                    isJumping = false; // Temporarily stop jump updates
+                }
+                else if (jumpPhase == JumpPhase.ToRoof)
+                {
+                    isJumping = false;
+                    jumpPhase = JumpPhase.None;
+                    Debug.Log("[Monster] Hidden in roof.");
+                }
+            }
+        }
+
+        // Face player while on ground during pause
+        if (waitingToHide && player != null)
         {
             Vector3 lookDir = (player.position - transform.position).normalized;
             lookDir.y = 0;
             if (lookDir.sqrMagnitude > 0.001f)
                 transform.rotation = Quaternion.LookRotation(lookDir);
-        }
 
-        // Mid-jump hit check only during first jump
-        if (!hasHitPlayer && jumpPhase == JumpPhase.ToPlayer && player != null)
-        {
-            float distance = Vector3.Distance(transform.position, player.position);
-            if (distance < hitRadius)
+            pauseTimer += Time.deltaTime;
+            if (pauseTimer >= postJumpPause)
             {
-                hasHitPlayer = true;
-                hits++;
-                Debug.Log("[Monster] Player hit mid-jump!");
-                if (hitFlashLight != null)
-                    StartCoroutine(RedLightFlash());
+                waitingToHide = false;
+                StartRoofHide();
             }
         }
-
-if (t >= 1f)
-{
-    if (jumpPhase == JumpPhase.ToPlayer)
-    {
-        // start waiting instead of immediately jumping to roof
-        waitingToHide = true;
-        pauseTimer = 0f;
-        isJumping = false; // temporarily stop jump updates
-        Debug.Log("[Monster] Waiting before going to roof...");
-    }
-    else if (jumpPhase == JumpPhase.ToRoof)
-    {
-        isJumping = false;
-        jumpPhase = JumpPhase.None;
-        Debug.Log("[Monster] Hidden in roof.");
-    }
-}
-if (waitingToHide)
-{
-    pauseTimer += Time.deltaTime;
-    if (pauseTimer >= postJumpPause)
-    {
-        waitingToHide = false;
-        StartRoofHide();
-    }
-}
-
     }
 
     public void RegisterEcho()
@@ -163,7 +168,7 @@ if (waitingToHide)
         targetPos = new Vector3(transform.position.x, roofHeight, transform.position.z);
         timer = 0f;
         jumpPhase = JumpPhase.ToRoof;
-isJumping = true;
+        isJumping = true;
         Debug.Log("[Monster] Jumping to roof to hide.");
     }
 

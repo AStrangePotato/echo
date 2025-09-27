@@ -15,6 +15,7 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
     public MonsterEchoJumpWithHit monsterScript; // for hits
     public MouseEchoSpawner echoSpawner;         // for echoCount
 
+    public MapController mapController; // to check if map is open
     [Header("Similarity Settings")]
     public int maxOffset = 15;
     public float similarityScore { get; private set; }
@@ -25,13 +26,13 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
     {
         // Track elapsed time
         elapsedTime += Time.deltaTime;
-
-        // Trigger similarity calculation and display
-        if (Input.GetKeyDown(KeyCode.Return))
-        {
+        if (mapController.IsMapOpen()) {
             CalculateSimilarity();
-            ShowScoreSheet();
         }
+    
+
+        UpdateScoreText();
+
     }
 
     public void CalculateSimilarity()
@@ -97,11 +98,10 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
             }
         }
 
-        similarityScore = Mathf.Clamp01(bestScore) * 5;
-        Debug.Log($"Similarity Score: {similarityScore:F3}");
+        similarityScore = Mathf.Clamp01(bestScore);
     }
 
-    void ShowScoreSheet()
+    void UpdateScoreText()
     {
         if (scoreSheetPanel == null || scoreText == null) return;
 
