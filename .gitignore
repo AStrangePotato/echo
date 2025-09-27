@@ -1,0 +1,46 @@
+# This .gitignore is tailored for Unity projects
+
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+
+# Asset meta data should be tracked
+!/[Aa]ssets/**/*.meta
+
+# Visual Studio / Rider / IDEs
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.opendb
+*.VC.db
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Crashlytics / Firebase / Packages
+*.apk
+*.aab
+*.unitypackage
+
+# JetBrains Rider
+.idea/
+*.sln.iml
