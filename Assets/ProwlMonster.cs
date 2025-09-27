@@ -2,6 +2,8 @@ using UnityEngine;
 
 public class MonsterEchoJumpWithHit : MonoBehaviour
 {
+    public int hits;
+
     [Header("Jump Settings")]
     public Transform player;
     public Animator animator;
@@ -21,61 +23,101 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     public float flashDuration = 0.3f;
     public float hitRadius = 1.5f;
 
+    [Header("Hide Settings")]
+    public float roofHeight = 10f;        // height to hide at
+    public float roofDuration = 0.5f;     // duration to reach roof
+
     private bool isJumping = false;
     private Vector3 startPos;
     private Vector3 targetPos;
     private float timer = 0f;
     private bool hasHitPlayer = false;
 
+    private enum JumpPhase { None, ToPlayer, ToRoof }
+    private JumpPhase jumpPhase = JumpPhase.None;
+
+    private float postJumpPause = 0.5f; // wait time before jumping to roof
+private float pauseTimer = 0f;
+private bool waitingToHide = false;
+
+
     void Start()
     {
         ResetNextThreshold();
-
         if (hitFlashLight != null)
             hitFlashLight.enabled = false; // start off
     }
 
     void Update()
     {
-        if (isJumping)
+        if (!isJumping) return;
+
+        timer += Time.deltaTime;
+        float duration = (jumpPhase == JumpPhase.ToPlayer) ? jumpDuration : roofDuration;
+        float t = Mathf.Clamp01(timer / duration);
+        float easeT = t * (2 - t);
+
+        // Horizontal movement
+        Vector3 horizontal = Vector3.Lerp(startPos, targetPos, easeT);
+        float yOffset;
+
+        if (jumpPhase == JumpPhase.ToPlayer)
+            yOffset = jumpHeight * 4 * t * (1 - t); // parabolic jump
+        else
+            yOffset = Mathf.Lerp(startPos.y, targetPos.y, easeT) - startPos.y; // linear up
+
+        transform.position = new Vector3(horizontal.x, horizontal.y + yOffset, horizontal.z);
+
+        // Face player only during first jump
+        if (jumpPhase == JumpPhase.ToPlayer && player != null)
         {
-            timer += Time.deltaTime;
-            float t = Mathf.Clamp01(timer / jumpDuration);
-            float easeT = t * (2 - t);
+            Vector3 lookDir = (player.position - transform.position).normalized;
+            lookDir.y = 0;
+            if (lookDir.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(lookDir);
+        }
 
-            Vector3 horizontal = Vector3.Lerp(startPos, targetPos, easeT);
-            float yOffset = jumpHeight * 4 * t * (1 - t);
-            transform.position = new Vector3(horizontal.x, horizontal.y + yOffset, horizontal.z);
-
-            // face player
-            if (player != null)
+        // Mid-jump hit check only during first jump
+        if (!hasHitPlayer && jumpPhase == JumpPhase.ToPlayer && player != null)
+        {
+            float distance = Vector3.Distance(transform.position, player.position);
+            if (distance < hitRadius)
             {
-                Vector3 lookDir = (player.position - transform.position).normalized;
-                lookDir.y = 0;
-                if (lookDir.sqrMagnitude > 0.001f)
-                    transform.rotation = Quaternion.LookRotation(lookDir);
-            }
-
-            // mid-jump hit check
-            if (!hasHitPlayer && player != null)
-            {
-                float distance = Vector3.Distance(transform.position, player.position);
-                if (distance < hitRadius)
-                {
-                    hasHitPlayer = true;
-                    Debug.Log("[Monster] Player hit mid-jump!");
-                    if (hitFlashLight != null)
-                        StartCoroutine(RedLightFlash());
-                }
-            }
-
-            if (t >= 1f)
-            {
-                isJumping = false;
-                hasHitPlayer = false;
-                Debug.Log("[Monster] Finished jump.");
+                hasHitPlayer = true;
+                hits++;
+                Debug.Log("[Monster] Player hit mid-jump!");
+                if (hitFlashLight != null)
+                    StartCoroutine(RedLightFlash());
             }
         }
+
+if (t >= 1f)
+{
+    if (jumpPhase == JumpPhase.ToPlayer)
+    {
+        // start waiting instead of immediately jumping to roof
+        waitingToHide = true;
+        pauseTimer = 0f;
+        isJumping = false; // temporarily stop jump updates
+        Debug.Log("[Monster] Waiting before going to roof...");
+    }
+    else if (jumpPhase == JumpPhase.ToRoof)
+    {
+        isJumping = false;
+        jumpPhase = JumpPhase.None;
+        Debug.Log("[Monster] Hidden in roof.");
+    }
+}
+if (waitingToHide)
+{
+    pauseTimer += Time.deltaTime;
+    if (pauseTimer >= postJumpPause)
+    {
+        waitingToHide = false;
+        StartRoofHide();
+    }
+}
+
     }
 
     public void RegisterEcho()
@@ -98,24 +140,31 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
 
     private void StartJump()
     {
-        if (player == null)
-        {
-            return;
-        }
+        if (player == null) return;
 
         startPos = transform.position;
         Vector3 dirToPlayer = (player.position - transform.position).normalized;
         targetPos = player.position + dirToPlayer * overshootDistance;
 
         if (animator != null)
-        {
             animator.Play(prowlClipName, 0, 0f);
-        }
 
         timer = 0f;
         isJumping = true;
+        jumpPhase = JumpPhase.ToPlayer;
         hasHitPlayer = false;
+
         Debug.Log($"[Monster] Jump started toward {targetPos} (overshoot {overshootDistance} units).");
+    }
+
+    private void StartRoofHide()
+    {
+        startPos = transform.position;
+        targetPos = new Vector3(transform.position.x, roofHeight, transform.position.z);
+        timer = 0f;
+        jumpPhase = JumpPhase.ToRoof;
+isJumping = true;
+        Debug.Log("[Monster] Jumping to roof to hide.");
     }
 
     private System.Collections.IEnumerator RedLightFlash()
@@ -127,8 +176,7 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
         while (elapsed < flashDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / flashDuration;
-            hitFlashLight.intensity = Mathf.Lerp(startIntensity, 0f, t);
+            hitFlashLight.intensity = Mathf.Lerp(startIntensity, 0f, elapsed / flashDuration);
             yield return null;
         }
 

@@ -2,7 +2,8 @@ using UnityEngine;
 using System.Collections.Generic;
 
 public class MouseEchoSpawner : MonoBehaviour
-{
+{   
+    public int echoCount = 0;
     [Header("Echo Settings")]
     public GameObject echoLightPrefab;   // Prefab with Spot Light + Cookie
     public Camera playerCamera;
@@ -16,7 +17,6 @@ public class MouseEchoSpawner : MonoBehaviour
     private List<GameObject> activeEchoes = new List<GameObject>();
 
     public MonsterEchoJumpWithHit monster; // Assign in inspector
-
 
     void Update()
     {
@@ -59,6 +59,8 @@ public class MouseEchoSpawner : MonoBehaviour
         activeEchoes.Add(echoObj);
         if (monster != null)
         monster.RegisterEcho();
+
+        echoCount++;
     }
 }
 
@@ -87,7 +89,7 @@ public class EchoInstance : MonoBehaviour
             echoLight.type = LightType.Spot;
             echoLight.intensity = maxIntensity;
             echoLight.range = travelDistance;
-            echoLight.spotAngle = 90f;
+            echoLight.spotAngle = 60f;
             echoLight.shadows = LightShadows.None;
         }
 

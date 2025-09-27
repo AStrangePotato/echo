@@ -1,12 +1,38 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-public class ImageSimilarityWithSlidingCheck : MonoBehaviour
+public class ImageSimilarityWithScoreSheet : MonoBehaviour
 {
+    [Header("Map Images")]
     public RawImage userMap;
     public RawImage solutionMap;
-    public float similarityScore { get; private set; }
+
+    [Header("Score UI")]
+    public GameObject scoreSheetPanel; // Panel to show score
+    public Text scoreText; // Single Text for all stats
+
+    [Header("Other Scripts")]
+    public MonsterEchoJumpWithHit monsterScript; // for hits
+    public MouseEchoSpawner echoSpawner;         // for echoCount
+
+    [Header("Similarity Settings")]
     public int maxOffset = 15;
+    public float similarityScore { get; private set; }
+
+    public float elapsedTime = 0f;
+
+    void Update()
+    {
+        // Track elapsed time
+        elapsedTime += Time.deltaTime;
+
+        // Trigger similarity calculation and display
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            CalculateSimilarity();
+            ShowScoreSheet();
+        }
+    }
 
     public void CalculateSimilarity()
     {
@@ -34,7 +60,6 @@ public class ImageSimilarityWithSlidingCheck : MonoBehaviour
 
         float bestScore = 0f;
 
-        // Slide offsets
         for (int offsetX = -maxOffset; offsetX <= maxOffset; offsetX++)
         {
             for (int offsetY = -maxOffset; offsetY <= maxOffset; offsetY++)
@@ -55,16 +80,11 @@ public class ImageSimilarityWithSlidingCheck : MonoBehaviour
                         int srcIndex = y * width + x;
                         int dstIndex = dstY * width + dstX;
 
-                        // Skip fully transparent pixels in both images
                         if (userPixels[srcIndex].a < 128 && solutionPixels[dstIndex].a < 128)
                             continue;
 
                         total++;
-
-                        bool userFilled = userPixels[srcIndex].a >= 128;
-                        bool solFilled = solutionPixels[dstIndex].a >= 128;
-
-                        if (userFilled == solFilled)
+                        if ((userPixels[srcIndex].a >= 128) == (solutionPixels[dstIndex].a >= 128))
                             matched++;
                     }
                 }
@@ -81,9 +101,28 @@ public class ImageSimilarityWithSlidingCheck : MonoBehaviour
         Debug.Log($"Similarity Score: {similarityScore:F3}");
     }
 
-    void Update()
+    void ShowScoreSheet()
     {
-        if (Input.GetKeyDown(KeyCode.Return))
-            CalculateSimilarity();
+        if (scoreSheetPanel == null || scoreText == null) return;
+
+        scoreSheetPanel.SetActive(true);
+
+        // Determine rank
+        string rank;
+        if (similarityScore >= 0.95f) rank = "S";
+        else if (similarityScore >= 0.85f) rank = "A";
+        else if (similarityScore >= 0.70f) rank = "B";
+        else rank = "C";
+
+        // Read public variables
+        int hits = monsterScript != null ? monsterScript.hits : 0;
+        int echoes = echoSpawner != null ? echoSpawner.echoCount : 0;
+
+        // Combine into single text
+        scoreText.text = $"Similarity: {(similarityScore * 100f):F1}%\n" +
+                         $"Rank: {rank}\n" +
+                         $"Echoes Used: {echoes}\n" +
+                         $"Hits: {hits}\n" +
+                         $"Time: {elapsedTime:F1}s";
     }
 }
