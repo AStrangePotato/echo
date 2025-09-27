@@ -15,6 +15,9 @@ public class MouseEchoSpawner : MonoBehaviour
     private float lastEchoTime = -10f;
     private List<GameObject> activeEchoes = new List<GameObject>();
 
+    public MonsterEchoJumpWithHit monster; // Assign in inspector
+
+
     void Update()
     {
         // Only trigger echo if map is not open
@@ -54,6 +57,8 @@ public class MouseEchoSpawner : MonoBehaviour
         echo.Init(playerCamera.transform.forward, pulseDuration, travelDistance, maxIntensity);
 
         activeEchoes.Add(echoObj);
+        if (monster != null)
+        monster.RegisterEcho();
     }
 }
 

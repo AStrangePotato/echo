@@ -85,7 +85,6 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
 
         if (currentEchoCount >= nextJumpThreshold && !isJumping)
         {
-            Debug.Log("[Monster] Threshold reached, preparing jump.");
             StartJump();
             currentEchoCount = 0;
             ResetNextThreshold();
@@ -95,14 +94,12 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     private void ResetNextThreshold()
     {
         nextJumpThreshold = baseEchoThreshold + Random.Range(0, randomOffsetMax + 1);
-        Debug.Log($"[Monster] Next jump threshold set to {nextJumpThreshold}");
     }
 
     private void StartJump()
     {
         if (player == null)
         {
-            Debug.LogWarning("[Monster] Player not assigned. Cannot jump.");
             return;
         }
 
@@ -113,7 +110,6 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
         if (animator != null)
         {
             animator.Play(prowlClipName, 0, 0f);
-            Debug.Log("[Monster] Playing prowl animation.");
         }
 
         timer = 0f;
