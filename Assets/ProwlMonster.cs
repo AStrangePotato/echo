@@ -40,7 +40,7 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     private enum JumpPhase { None, ToPlayer, ToRoof }
     private JumpPhase jumpPhase = JumpPhase.None;
 
-    private float postJumpPause = 0.5f; // wait time before jumping to roof
+    private float postJumpPause = 1f; // wait time before jumping to roof
     private float pauseTimer = 0f;
     private bool waitingToHide = false;
 

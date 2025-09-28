@@ -98,7 +98,7 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
             }
         }
 
-        similarityScore = Mathf.Clamp01(bestScore);
+        similarityScore = Mathf.Clamp01(bestScore) * 5;
     }
 
     void UpdateScoreText()
@@ -108,16 +108,17 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
         scoreSheetPanel.SetActive(true);
 
         // Determine rank
-        string rank;
-        if (similarityScore >= 0.6f) rank = "S";
-        else if (similarityScore >= 0.45f) rank = "A";
-        else if (similarityScore >= 0.30f) rank = "B";
-        else rank = "C";
+
 
         // Read public variables
         int hits = monsterScript != null ? monsterScript.hits : 0;
         int echoes = echoSpawner != null ? echoSpawner.echoCount : 0;
 
+        string rank;
+        if (similarityScore >= 0.7f) rank = "S";
+        else if (similarityScore >= 0.55f) rank = "A";
+        else if (similarityScore >= 0.3f) rank = "B";
+        else rank = "C";
         // Combine into single text
         scoreText.text = $"Similarity: {(similarityScore * 100f):F1}%\n" +
                          $"Rank: {rank}\n" +
