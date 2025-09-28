@@ -11,7 +11,11 @@ public class FPSController : MonoBehaviour
     public float pitchLimit = 85f;
 
     [Header("References")]
-    public MapController mapController; // Assign in inspector
+    public MapController mapController;
+
+    [Header("Footstep Audio")]
+    public AudioClip footstepClip; // assign your long footstep loop
+    private AudioSource footstepSource;
 
     private CharacterController controller;
     private float verticalVelocity = 0f;
@@ -22,18 +26,25 @@ public class FPSController : MonoBehaviour
         controller = GetComponent<CharacterController>();
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+
+        if (footstepClip != null)
+        {
+            footstepSource = gameObject.AddComponent<AudioSource>();
+            footstepSource.clip = footstepClip;
+            footstepSource.loop = true;
+            footstepSource.playOnAwake = false;
+            footstepSource.spatialBlend = 1f; // 3D sound
+            footstepSource.volume = 0.5f;
+        }
     }
 
     void Update()
     {
-        // Only process look input if map is not open
         if (mapController == null || !mapController.IsMapOpen())
         {
             Move();
             Look();
         }
-
-        
     }
 
     void Look()
@@ -62,5 +73,22 @@ public class FPSController : MonoBehaviour
         move.y = verticalVelocity;
 
         controller.Move(move * Time.deltaTime);
+
+        HandleFootsteps(move);
+    }
+
+    void HandleFootsteps(Vector3 move)
+    {
+        Vector3 horizontalMove = new Vector3(move.x, 0f, move.z);
+        if (controller.isGrounded && horizontalMove.magnitude > 0.1f)
+        {
+            if (footstepSource != null && !footstepSource.isPlaying)
+                footstepSource.Play();
+        }
+        else
+        {
+            if (footstepSource != null && footstepSource.isPlaying)
+                footstepSource.Pause();
+        }
     }
 }

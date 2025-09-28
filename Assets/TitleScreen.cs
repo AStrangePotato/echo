@@ -26,23 +26,22 @@ public class TitleScreen : MonoBehaviour
         }
     }
 
-    void StartGame()
-    {   
-        // Hide title screen
-        if (titleScreenCanvas != null)
-        {
-            titleScreenCanvas.SetActive(false);
-        }
+void StartGame()
+{   
+    // Hide title screen
+    if (titleScreenCanvas != null)
+        titleScreenCanvas.SetActive(false);
 
-        // Enable player
-        if (player != null)
-        {
-            player.SetActive(true);
-        }
+    // Enable player
+    if (player != null)
+        player.SetActive(true);
 
-        // Optional: If using a separate game scene, uncomment:
-        // SceneManager.LoadScene("GameScene"); // Ensure your maze scene is named "GameScene"
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-    }
+    // Lock cursor
+    Cursor.lockState = CursorLockMode.Locked;
+    Cursor.visible = false;
+
+    // Start spotlight flicker after 5s
+    FindObjectOfType<SpotlightFlicker>()?.StartFlickerAfterDelay(5f);
+}
+
 }

@@ -1911,7 +1911,7 @@ MonoBehaviour:
   pulseDuration: 3
   travelDistance: 20
   maxIntensity: 15
-  mouseCooldown: 0.4
+  mouseCooldown: 0.3
   monster: {fileID: 1025959284}
 --- !u!1001 &1025959281
 PrefabInstance:

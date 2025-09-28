@@ -13,6 +13,10 @@ public class MouseEchoSpawner : MonoBehaviour
     public float maxIntensity = 8f;
     public float mouseCooldown = 0.5f;   // minimum interval between echoes
 
+        [Header("Audio")]
+    public AudioClip echoSound;          // Sound to play on each echo
+    public float echoVolume = 1f;
+
     private float lastEchoTime = -10f;
     private List<GameObject> activeEchoes = new List<GameObject>();
 
@@ -61,6 +65,10 @@ public class MouseEchoSpawner : MonoBehaviour
         monster.RegisterEcho();
 
         echoCount++;
+
+        if (echoSound != null)
+            AudioSource.PlayClipAtPoint(echoSound, playerCamera.transform.position, echoVolume);
+    
     }
 }
 

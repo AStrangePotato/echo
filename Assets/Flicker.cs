@@ -2,7 +2,6 @@ using UnityEngine;
 using System.Collections;
 
 [RequireComponent(typeof(Light))]
-[RequireComponent(typeof(AudioSource))]
 public class SpotlightFlicker : MonoBehaviour
 {
     [Header("Initial Settings")]
@@ -14,55 +13,47 @@ public class SpotlightFlicker : MonoBehaviour
     public float finalRange = 3f;
 
     [Header("Flicker Settings")]
-    public float delay = 5f;           // Wait before flicker
-    public float flickerDuration = 1f; // Total flicker time
-    public int flickerCount = 10;      // Number of flickers
-    public float minIntensity = 0.1f;  // Minimum during flicker
-
-    [Header("Audio")]
-    public AudioClip flickerEndSfx;    // Assign your sound effect here
-    [Range(0f,1f)]
-    public float sfxVolume = 1f;
+    public float flickerDuration = 1f; // total flicker time
+    public int flickerCount = 10;
+    public float minIntensity = 0.1f;  // min during flicker
+        [Header("Audio")]
+    public AudioClip echoSound;          // Sound to play on each echo
+    public float echoVolume = 1f;
 
     private Light spotLight;
-    private AudioSource audioSource;
 
-    void Start()
+    void Awake()
     {
         spotLight = GetComponent<Light>();
-        audioSource = GetComponent<AudioSource>();
-
-        if (spotLight.type != LightType.Spot)
-            Debug.LogWarning("This script is designed for Spotlights");
-
         spotLight.intensity = startIntensity;
         spotLight.range = startRange;
-
-        // Configure AudioSource
-        audioSource.playOnAwake = false;
-        audioSource.clip = flickerEndSfx;
-        audioSource.spatialBlend = 0f; // 2D sound
-
-        StartCoroutine(FlickerRoutine());
     }
 
-    IEnumerator FlickerRoutine()
+    public void StartFlickerAfterDelay(float delay)
     {
-        // Wait before flicker
+        StartCoroutine(FlickerRoutine(delay));
+    }
+
+    IEnumerator FlickerRoutine(float delay)
+    {
         yield return new WaitForSeconds(delay);
 
         float interval = flickerDuration / flickerCount;
 
         // Flicker loop
+
+        if (echoSound != null)
+            AudioSource.PlayClipAtPoint(echoSound, transform.position, echoVolume);
+    
         for (int i = 0; i < flickerCount; i++)
         {
             spotLight.intensity = Random.Range(minIntensity, startIntensity);
             yield return new WaitForSeconds(interval);
         }
 
-        // Smoothly transition to final intensity and range
+        // Smooth transition to final intensity/range
         float elapsed = 0f;
-        float transitionDuration = 0.5f; // fade duration
+        float transitionDuration = 0.5f;
         float initialIntensity = spotLight.intensity;
         float initialRange = spotLight.range;
 
@@ -77,9 +68,5 @@ public class SpotlightFlicker : MonoBehaviour
 
         spotLight.intensity = finalIntensity;
         spotLight.range = finalRange;
-
-        // Play SFX after flicker completes
-        if (flickerEndSfx != null)
-            audioSource.PlayOneShot(flickerEndSfx, sfxVolume);
     }
 }

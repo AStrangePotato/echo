@@ -27,6 +27,10 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     public float roofHeight = 10f;        // height to hide at
     public float roofDuration = 0.5f;     // duration to reach roof
 
+        [Header("Audio")]
+    public AudioClip echoSound;          // Sound to play on each echo
+    public float echoVolume = 1f;
+
     private bool isJumping = false;
     private Vector3 startPos;
     private Vector3 targetPos;
@@ -51,6 +55,9 @@ public class MonsterEchoJumpWithHit : MonoBehaviour
     {
         if (isJumping)
         {
+            if (echoSound != null)
+            AudioSource.PlayClipAtPoint(echoSound, transform.position, echoVolume);
+    
             timer += Time.deltaTime;
             float duration = (jumpPhase == JumpPhase.ToPlayer) ? jumpDuration : roofDuration;
             float t = Mathf.Clamp01(timer / duration);
