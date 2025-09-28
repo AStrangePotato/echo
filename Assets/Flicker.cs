@@ -16,17 +16,31 @@ public class SpotlightFlicker : MonoBehaviour
     public float flickerDuration = 1f; // total flicker time
     public int flickerCount = 10;
     public float minIntensity = 0.1f;  // min during flicker
-        [Header("Audio")]
-    public AudioClip echoSound;          // Sound to play on each echo
+
+    [Header("Audio")]
+    public AudioClip echoSound;          // One-shot echo
     public float echoVolume = 1f;
+    public AudioClip buzzSound;          // Looping buzz
+    public float buzzVolume = 1f;
 
     private Light spotLight;
+    private AudioSource buzzSource;
 
     void Awake()
     {
         spotLight = GetComponent<Light>();
         spotLight.intensity = startIntensity;
         spotLight.range = startRange;
+
+        if (buzzSound != null)
+        {
+            buzzSource = gameObject.AddComponent<AudioSource>();
+            buzzSource.clip = buzzSound;
+            buzzSource.loop = true;
+            buzzSource.playOnAwake = false;
+            buzzSource.spatialBlend = 1f; // 3D sound
+            buzzSource.volume = buzzVolume;
+        }
     }
 
     public void StartFlickerAfterDelay(float delay)
@@ -38,13 +52,17 @@ public class SpotlightFlicker : MonoBehaviour
     {
         yield return new WaitForSeconds(delay);
 
+        // Play one-shot echo
+        if (echoSound != null)
+            AudioSource.PlayClipAtPoint(echoSound, transform.position, echoVolume);
+
+        // Start buzz
+        if (buzzSource != null)
+            buzzSource.Play();
+
         float interval = flickerDuration / flickerCount;
 
         // Flicker loop
-
-        if (echoSound != null)
-            AudioSource.PlayClipAtPoint(echoSound, transform.position, echoVolume);
-    
         for (int i = 0; i < flickerCount; i++)
         {
             spotLight.intensity = Random.Range(minIntensity, startIntensity);
@@ -68,5 +86,9 @@ public class SpotlightFlicker : MonoBehaviour
 
         spotLight.intensity = finalIntensity;
         spotLight.range = finalRange;
+
+        // Stop buzz after flicker completes
+        if (buzzSource != null)
+            buzzSource.Stop();
     }
 }

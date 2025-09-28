@@ -109,9 +109,9 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
 
         // Determine rank
         string rank;
-        if (similarityScore >= 0.95f) rank = "S";
-        else if (similarityScore >= 0.85f) rank = "A";
-        else if (similarityScore >= 0.70f) rank = "B";
+        if (similarityScore >= 0.6f) rank = "S";
+        else if (similarityScore >= 0.45f) rank = "A";
+        else if (similarityScore >= 0.30f) rank = "B";
         else rank = "C";
 
         // Read public variables
@@ -122,7 +122,7 @@ public class ImageSimilarityWithScoreSheet : MonoBehaviour
         scoreText.text = $"Similarity: {(similarityScore * 100f):F1}%\n" +
                          $"Rank: {rank}\n" +
                          $"Echoes Used: {echoes}\n" +
-                         $"Hits: {hits}\n" +
+                         $"Injuries: {hits}\n" +
                          $"Time: {elapsedTime:F1}s";
     }
 }
